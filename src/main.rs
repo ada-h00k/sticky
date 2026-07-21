@@ -48,7 +48,11 @@ fn run() -> Result<(), String> {
 
     match evaluate_plasma_script(&script) {
         Ok(widget_id) => {
-            println!("Sticky note created (widget ID: {widget_id}).");
+            if widget_id == "unknown" {
+                println!("Sticky note created.");
+            } else {
+                println!("Sticky note created (widget ID: {widget_id}).");
+            }
             Ok(())
         }
         Err(error) => {
@@ -439,6 +443,12 @@ fn parse_dbus_output(backend: &str, output: Output) -> Result<String, String> {
         return Err(format!("D-Bus call via {backend} failed: {details}"));
     }
 
+    // PlasmaShell.evaluateScript has a void D-Bus return type. qdbus therefore
+    // prints nothing on success, while gdbus commonly prints `()`.
+    if stdout.trim().is_empty() || stdout.trim() == "()" {
+        return Ok("unknown".into());
+    }
+
     Err(format!(
         "unexpected response from {backend}: {}",
         stdout.trim()
@@ -464,6 +474,32 @@ mod tests {
         assert_eq!(uuid.len(), 36);
         assert_eq!(&uuid[14..15], "4");
         assert!(matches!(&uuid[19..20], "8" | "9" | "a" | "b"));
+    }
+
+    #[test]
+    fn accepts_empty_successful_dbus_response() {
+        use std::os::unix::process::ExitStatusExt;
+
+        let output = Output {
+            status: std::process::ExitStatus::from_raw(0),
+            stdout: Vec::new(),
+            stderr: Vec::new(),
+        };
+
+        assert_eq!(parse_dbus_output("qdbus6", output), Ok("unknown".into()));
+    }
+
+    #[test]
+    fn accepts_gdbus_void_response() {
+        use std::os::unix::process::ExitStatusExt;
+
+        let output = Output {
+            status: std::process::ExitStatus::from_raw(0),
+            stdout: b"()\n".to_vec(),
+            stderr: Vec::new(),
+        };
+
+        assert_eq!(parse_dbus_output("gdbus", output), Ok("unknown".into()));
     }
 
     #[test]
