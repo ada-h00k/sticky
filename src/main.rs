@@ -294,7 +294,11 @@ fn build_plasma_script(note_id: &str, options: &Options) -> String {
              try {{\n\
                  let panel = null;\n\
                  {panel_selector}\n\
-                 const widget = panel.addWidget('{PLASMOID_ID}');\n\
+                 const appletSize = Math.max(1, panel.height);\n\
+                 const primaryPosition = Math.max(0, Math.floor((panel.length - appletSize) / 2));\n\
+                 const x = panel.formFactor === 'vertical' ? 0 : primaryPosition;\n\
+                 const y = panel.formFactor === 'vertical' ? primaryPosition : 0;\n\
+                 const widget = panel.addWidget('{PLASMOID_ID}', x, y, appletSize, appletSize);\n\
                  if (!widget) return 'STICKY_ERROR:Could not create the Sticky Note widget';\n\
                  widget.currentConfigGroup = ['General'];\n\
                  widget.writeConfig('noteId', '{note_id}');\n\
@@ -513,7 +517,15 @@ mod tests {
         };
         let script = build_plasma_script("abc", &options);
         assert!(script.contains("panelIds"));
-        assert!(script.contains("panel.addWidget('org.kde.plasma.notes')"));
+        assert!(script.contains("const appletSize = Math.max(1, panel.height)"));
+        assert!(script.contains(
+            "const primaryPosition = Math.max(0, Math.floor((panel.length - appletSize) / 2))"
+        ));
+        assert!(script.contains("panel.formFactor === 'vertical'"));
+        assert!(script.contains(
+            "panel.addWidget('org.kde.plasma.notes', x, y, appletSize, appletSize)"
+        ));
+        assert!(!script.contains("widget.index"));
         assert!(script.contains("widget.writeConfig('noteId', 'abc')"));
     }
 }
