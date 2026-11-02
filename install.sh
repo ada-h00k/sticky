@@ -1,12 +1,16 @@
 #!/usr/bin/env sh
 set -eu
 REPO="ada-h00k/sticky"
-DEST_DIR=\${XDG_BIN_HOME:-"$HOME/.local/bin"}
+DEST_DIR=${XDG_BIN_HOME:-"$HOME/.local/bin"}
 ARCH=$(uname -m)
 case "$ARCH" in
   x86_64|amd64) ASSET="sticky-linux-x86_64" ;;
   aarch64|arm64) ASSET="sticky-linux-aarch64" ;;
   *) echo "Unsupported architecture: $ARCH" >&2; exit 1 ;;
+esac
+case "${XDG_CURRENT_DESKTOP:-}" in
+  *KDE*|*Plasma*|"") ;;
+  *) echo "Warning: sticky requires KDE Plasma; this desktop may not be supported." >&2 ;;
 esac
 mkdir -p "$DEST_DIR"
 TMP_FILE=$(mktemp)
