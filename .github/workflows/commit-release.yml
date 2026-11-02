@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    name: Build (${{ matrix.arch })
+    name: Build (${{ matrix.arch }})
     strategy:
       fail-fast: false
       matrix:
@@ -20,7 +20,7 @@ jobs:
             arch: x86_64
           - runner: ubuntu-24.04-arm
             arch: aarch64
-    runs-on: ${{ matrix.runner }
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
       - name: Install Rust
@@ -29,12 +29,12 @@ jobs:
         run: cargo build --release
       - name: Stage binary
         run: |
-          install -Dm755 target/release/sticky "dist/sticky-linux-${{ matrix.arch }"
+          install -Dm755 target/release/sticky "dist/sticky-linux-${{ matrix.arch }}"
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
-          name: sticky-linux-${{ matrix.arch }
-          path: dist/sticky-linux-${{ matrix.arch }
+          name: sticky-linux-${{ matrix.arch }}
+          path: dist/sticky-linux-${{ matrix.arch }}
           if-no-files-found: error
 
   release:
@@ -49,11 +49,11 @@ jobs:
           merge-multiple: true
       - name: Publish GitHub Release
         env:
-          GH_TOKEN: ${{ github.token }
-          TAG: commit-${{ github.sha }
+          GH_TOKEN: ${{ github.token }}
+          TAG: commit-${{ github.sha }}
         run: |
           gh release create "$TAG" dist/* \
-            --repo "${{ github.repository }" \
+            --repo "${{ github.repository }}" \
             --title "Build ${GITHUB_SHA::12}" \
             --notes "Automated binaries for commit $GITHUB_SHA." \
             --prerelease
