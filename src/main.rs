@@ -270,7 +270,7 @@ fn build_plasma_script(note_id: &str, options: &Options) -> String {
     let panel_selector = if let Some(panel_id) = options.panel_id {
         format!(
             "panel = panelById({panel_id});\n\
-             if (!panel) return 'STICKY_ERROR:Panel {panel_id} was not found';"
+             if (!panel) return print('STICKY_ERROR:Panel {panel_id} was not found');"
         )
     } else if let Some(screen) = options.screen {
         format!(
@@ -278,14 +278,14 @@ fn build_plasma_script(note_id: &str, options: &Options) -> String {
                  const candidate = panelById(panelIds[i]);\n\
                  if (candidate && candidate.screen === {screen}) {{ panel = candidate; break; }}\n\
              }}\n\
-             if (!panel) return 'STICKY_ERROR:No panel found on screen {screen}';"
+             if (!panel) return print('STICKY_ERROR:No panel found on screen {screen}');"
         )
     } else {
         "for (let i = 0; i < panelIds.length; ++i) {\n\
              const candidate = panelById(panelIds[i]);\n\
              if (candidate) { panel = candidate; break; }\n\
          }\n\
-         if (!panel) return 'STICKY_ERROR:No Plasma panel found';"
+         if (!panel) return print('STICKY_ERROR:No Plasma panel found');"
             .to_string()
     };
 
@@ -299,15 +299,15 @@ fn build_plasma_script(note_id: &str, options: &Options) -> String {
                  const x = panel.formFactor === 'vertical' ? 0 : primaryPosition;\n\
                  const y = panel.formFactor === 'vertical' ? primaryPosition : 0;\n\
                  const widget = panel.addWidget('{PLASMOID_ID}', x, y, appletSize, appletSize);\n\
-                 if (!widget) return 'STICKY_ERROR:Could not create the Sticky Note widget';\n\
+                 if (!widget) return print('STICKY_ERROR:Could not create the Sticky Note widget');\n\
                  widget.currentConfigGroup = ['General'];\n\
                  widget.writeConfig('noteId', '{note_id}');\n\
                  widget.writeConfig('color', '{}');\n\
                  widget.writeConfig('pinOpen', {});\n\
                  widget.reloadConfig();\n\
-                 return 'STICKY_OK:' + widget.id;\n\
+                 print('STICKY_OK:' + widget.id);\n\
              }} catch (error) {{\n\
-                 return 'STICKY_ERROR:' + String(error);\n\
+                 print('STICKY_ERROR:' + String(error));\n\
              }}\n\
          }})()",
         options.color,
@@ -527,5 +527,9 @@ mod tests {
         ));
         assert!(!script.contains("widget.index"));
         assert!(script.contains("widget.writeConfig('noteId', 'abc')"));
+        assert!(script.contains("print('STICKY_OK:' + widget.id)"));
+        assert!(script.contains("print('STICKY_ERROR:' + String(error))"));
+        assert!(script.contains("if (!panel) return print('STICKY_ERROR:No Plasma panel found')"));
+        assert!(script.contains("if (!widget) return print('STICKY_ERROR:Could not create the Sticky Note widget')"));
     }
 }
